@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 
@@ -76,16 +75,15 @@ function Auth() {
   async function handleGoogle() {
     setBusy(true);
     setError(null);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin },
     });
-    setBusy(false);
-    if (result.error) {
-      setError(result.error.message);
-      return;
+    if (error) {
+      setBusy(false);
+      setError(error.message);
     }
-    if (result.redirected) return;
-    goAfter();
+    // On success the browser is redirected to Google; busy stays true until navigation.
   }
 
   return (

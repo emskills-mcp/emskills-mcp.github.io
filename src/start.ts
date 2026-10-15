@@ -3,11 +3,7 @@ import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/r
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
-// Lovable email routes authenticate themselves; never wrap or redirect them.
-const isLovableRoute = (url: string) => new URL(url).pathname.startsWith("/lovable/");
-
-const errorMiddleware = createMiddleware().server(async ({ next, request }) => {
-  if (isLovableRoute(request.url)) return next();
+const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
     return await next();
   } catch (error) {
@@ -26,7 +22,7 @@ const errorMiddleware = createMiddleware().server(async ({ next, request }) => {
 // file opts out, so re-add it explicitly to keep server functions protected
 // from cross-site requests.
 const csrfMiddleware = createCsrfMiddleware({
-  filter: (ctx) => ctx.handlerType === "serverFn" && !isLovableRoute(ctx.request.url),
+  filter: (ctx) => ctx.handlerType === "serverFn",
 });
 
 export const startInstance = createStart(() => ({
