@@ -8,6 +8,7 @@ dist/
 .output/
 .nitro/
 .vinxi/
+.vercel/output/
 
 # Environment variables
 .env
