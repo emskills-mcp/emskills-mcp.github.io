@@ -38,7 +38,14 @@ console.log("Copying server bundle to .vercel/output/functions/__nitro.func ..."
 mkdirSync(fnDir, { recursive: true });
 cpSync(join(dist, "server"), fnDir, { recursive: true });
 
-// 3. .vc-config.json — Node.js 22 serverless, 30 s max
+// 3. package.json — mark the function directory as ESM so Node.js parses
+//    server.js (which uses `export default`) correctly.
+writeFileSync(
+  join(fnDir, "package.json"),
+  JSON.stringify({ type: "module" }, null, 2)
+);
+
+// 5. .vc-config.json — Node.js 22 serverless, 30 s max
 writeFileSync(
   join(fnDir, ".vc-config.json"),
   JSON.stringify(
@@ -90,7 +97,7 @@ export default async function handler(req, res) {
 `
 );
 
-// 5. config.json — immutable cache for hashed assets, fall through to function
+// 7. config.json — immutable cache for hashed assets, fall through to function
 writeFileSync(
   join(out, "config.json"),
   JSON.stringify(
