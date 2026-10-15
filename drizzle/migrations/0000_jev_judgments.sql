@@ -1,0 +1,2 @@
+ALTER TABLE public.skill_submissions ADD COLUMN IF NOT EXISTS ai_triage jsonb, ADD COLUMN IF NOT EXISTS ai_triaged_at timestamptz;
+ALTER TABLE public.skills ADD COLUMN IF NOT EXISTS ai_quality jsonb, ADD COLUMN IF NOT EXISTS ai_quality_at timestamptz;
