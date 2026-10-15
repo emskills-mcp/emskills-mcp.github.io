@@ -10,6 +10,13 @@ import path from "node:path";
 Object.assign(process.env, loadEnv(process.env["NODE_ENV"] ?? "development", process.cwd(), ""));
 
 export default defineConfig({
+  environments: {
+    // Bundle all node_modules into the server chunk so the Vercel function
+    // is self-contained (no node_modules directory needed at runtime).
+    ssr: {
+      resolve: { noExternal: true },
+    },
+  },
   plugins: [
     tanstackStart({
       // src/server.ts is our SSR error-wrapper that delegates to the TanStack handler.
