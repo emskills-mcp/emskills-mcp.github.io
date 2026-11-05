@@ -1,7 +1,9 @@
-// Server-only TypeSafe Jev helpers (typed judgments via the Lovable AI Gateway).
+// Server-only structured judgment helpers via the Anthropic API.
+// Replicates the TypeSafe Jev interface (choice/score/noul) using Claude tool_use.
 import { techniques } from "@/data/skills";
 
-const MODEL = "typesafe/jev-latest";
+const MODEL = "claude-haiku-5-5";
+const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 
 type Question =
   | { type: "choice"; instructions: unknown; criteria: Record<string, unknown> }
@@ -26,17 +28,99 @@ export async function askJev(
   state: unknown,
   questions: Record<string, Question>,
 ): Promise<Record<string, Answer>> {
-  const key = process.env["LOVABLE_API_KEY"];
+  const key = process.env["ANTHROPIC_API_KEY"];
   if (!key) throw new JevError(401, "AI judgments are not configured.");
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/systemone", {
+
+  // Build tool input_schema from question types so Claude returns structured output.
+  const properties: Record<string, object> = {};
+  const required: string[] = [];
+  for (const [id, q] of Object.entries(questions)) {
+    if (q.type === "choice") {
+      const criteria = q.criteria as Record<string, unknown>;
+      properties[id] = {
+        type: "object",
+        properties: {
+          choice: { type: "string", enum: Object.keys(criteria) },
+          confidence: { type: "number", minimum: 0, maximum: 1 },
+          probabilities: { type: "object", additionalProperties: { type: "number" } },
+        },
+        required: ["choice", "confidence"],
+      };
+    } else if (q.type === "score") {
+      const levels = (q.criteria as unknown[]).length;
+      properties[id] = {
+        type: "object",
+        properties: { score: { type: "number", minimum: 0, maximum: levels - 1 } },
+        required: ["score"],
+      };
+    } else {
+      // noul: a 0–1 probability that the statement is true
+      properties[id] = {
+        type: "object",
+        properties: { noul: { type: "number", minimum: 0, maximum: 1 } },
+        required: ["noul"],
+      };
+    }
+    required.push(id);
+  }
+
+  // Build a readable prompt describing state and each question.
+  const questionLines = Object.entries(questions).map(([id, q]) => {
+    const base = `[${id}] (${q.type}) ${q.instructions}`;
+    if (q.type === "choice") {
+      const criteria = q.criteria as Record<string, unknown>;
+      const opts = Object.entries(criteria).map(([k, v]) => `  "${k}": ${v}`).join("\n");
+      return `${base}\nOptions:\n${opts}`;
+    }
+    if (q.type === "score") {
+      const criteria = q.criteria as unknown[];
+      const levels = criteria.map((c, i) => `  ${i}: ${c}`).join("\n");
+      return `${base}\nScale (0–${criteria.length - 1}):\n${levels}`;
+    }
+    // noul: show true/false criteria if provided
+    if (q.criteria) {
+      const c = q.criteria as { true?: unknown; false?: unknown };
+      return `${base}\n  true: ${c.true ?? "yes"}\n  false: ${c.false ?? "no"}`;
+    }
+    return base;
+  });
+
+  const userContent = [
+    "STATE (JSON):",
+    JSON.stringify(state, null, 2),
+    "",
+    "QUESTIONS:",
+    questionLines.join("\n\n"),
+    "",
+    "Answer every question using the submit_answers tool. Be precise and consistent.",
+  ].join("\n");
+
+  const res = await fetch(ANTHROPIC_URL, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${key}`,
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
       "Content-Type": "application/json",
-      "X-Lovable-AIG-SDK": "fetch",
     },
-    body: JSON.stringify({ model: MODEL, state, questions }),
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 4096,
+      system:
+        "You are a structured evaluation engine for an electron microscopy AI-skill registry. " +
+        "Given a state object and a list of judgment questions, you answer every question accurately " +
+        "and return ALL answers in a single tool call. Never skip a question.",
+      tools: [
+        {
+          name: "submit_answers",
+          description: "Submit structured answers to all judgment questions.",
+          input_schema: { type: "object", properties, required },
+        },
+      ],
+      tool_choice: { type: "tool", name: "submit_answers" },
+      messages: [{ role: "user", content: userContent }],
+    }),
   });
+
   if (!res.ok) {
     let msg = `AI judgment failed (${res.status}).`;
     try {
@@ -45,15 +129,22 @@ export async function askJev(
     } catch {
       /* ignore */
     }
-    if (res.status === 402) msg = "AI credits are exhausted — top up in workspace settings to resume judgments.";
+    if (res.status === 429) msg = "AI rate limit reached — retry shortly.";
+    if (res.status === 529) msg = "AI overloaded — retry shortly.";
     throw new JevError(res.status, msg);
   }
-  const json = (await res.json()) as { answers?: Record<string, Answer> };
-  if (!json.answers) throw new JevError(502, "AI judgment returned no answers.");
+
+  const json = (await res.json()) as {
+    content?: { type: string; name?: string; input?: Record<string, Answer> }[];
+  };
+  const toolBlock = json.content?.find((b) => b.type === "tool_use" && b.name === "submit_answers");
+  if (!toolBlock?.input) throw new JevError(502, "AI judgment returned no answers.");
+
+  const answers = toolBlock.input as Record<string, Answer>;
   for (const id of Object.keys(questions)) {
-    if (!json.answers[id]) throw new JevError(502, `AI judgment missing answer "${id}".`);
+    if (!answers[id]) throw new JevError(502, `AI judgment missing answer "${id}".`);
   }
-  return json.answers;
+  return answers;
 }
 
 const norm = (score: number | undefined, levels: number) =>

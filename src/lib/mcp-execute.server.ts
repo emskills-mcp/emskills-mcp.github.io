@@ -2,8 +2,8 @@
 // A tool call is executed by a real model that is grounded in the skill's
 // published SKILL.md, so the run reflects the actual manifest, not a stub.
 
-const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-2.5-flash";
+const AI_URL = "https://api.anthropic.com/v1/messages";
+const MODEL = "claude-sonnet-5-5";
 
 export type HostedSkill = {
   slug: string;
@@ -70,7 +70,7 @@ export async function executeSkill(
   skill: HostedSkill,
   args: Record<string, unknown>,
 ): Promise<Execution> {
-  const apiKey = process.env["LOVABLE_API_KEY"];
+  const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return fallback(skill, args, "no model credential configured");
 
   const manifest = await loadManifest(skill);
@@ -108,22 +108,25 @@ export async function executeSkill(
   try {
     const res = await fetch(AI_URL, {
       method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         model: MODEL,
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: user },
-        ],
+        max_tokens: 1024,
+        system,
+        messages: [{ role: "user", content: user }],
       }),
     });
     if (res.status === 429) return fallback(skill, args, "model rate limit reached, retry shortly");
-    if (res.status === 402) return fallback(skill, args, "model credits exhausted for this workspace");
-    if (!res.ok) return fallback(skill, args, `gateway HTTP ${res.status}`);
+    if (res.status === 529) return fallback(skill, args, "model overloaded, retry shortly");
+    if (!res.ok) return fallback(skill, args, `API HTTP ${res.status}`);
     const json = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
+      content?: { type: string; text?: string }[];
     };
-    const text = json.choices?.[0]?.message?.content?.trim();
+    const text = json.content?.find((b) => b.type === "text")?.text?.trim();
     if (!text) return fallback(skill, args, "model returned an empty completion");
     return { text, model: MODEL, grounded: Boolean(manifest) };
   } catch (e) {
