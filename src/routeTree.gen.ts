@@ -35,8 +35,6 @@ import { Route as AuthenticatedAdminReviewRouteImport } from './routes/_authenti
 import { Route as ApiPublicCronRegistrySyncRouteImport } from './routes/api/public/cron/registry-sync'
 import { Route as ApiPublicMcpSlugRouteImport } from './routes/api/public/mcp/$slug'
 import { Route as ApiPublicWebhooksGithubRouteImport } from './routes/api/public/webhooks/github'
-import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
-
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -170,13 +168,6 @@ const ApiPublicWebhooksGithubRoute = ApiPublicWebhooksGithubRouteImport.update({
   path: '/api/public/webhooks/github',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LovableEmailTransactionalPreviewRoute =
-  LovableEmailTransactionalPreviewRouteImport.update({
-    id: '/lovable/email/transactional/preview',
-    path: '/lovable/email/transactional/preview',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
@@ -203,7 +194,6 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/registry-sync': typeof ApiPublicCronRegistrySyncRoute
   '/api/public/mcp/$slug': typeof ApiPublicMcpSlugRoute
   '/api/public/webhooks/github': typeof ApiPublicWebhooksGithubRoute
-  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -231,7 +221,6 @@ export interface FileRoutesByTo {
   '/api/public/cron/registry-sync': typeof ApiPublicCronRegistrySyncRoute
   '/api/public/mcp/$slug': typeof ApiPublicMcpSlugRoute
   '/api/public/webhooks/github': typeof ApiPublicWebhooksGithubRoute
-  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -261,7 +250,6 @@ export interface FileRoutesById {
   '/api/public/cron/registry-sync': typeof ApiPublicCronRegistrySyncRoute
   '/api/public/mcp/$slug': typeof ApiPublicMcpSlugRoute
   '/api/public/webhooks/github': typeof ApiPublicWebhooksGithubRoute
-  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -291,7 +279,6 @@ export interface FileRouteTypes {
     | '/api/public/cron/registry-sync'
     | '/api/public/mcp/$slug'
     | '/api/public/webhooks/github'
-    | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -319,7 +306,6 @@ export interface FileRouteTypes {
     | '/api/public/cron/registry-sync'
     | '/api/public/mcp/$slug'
     | '/api/public/webhooks/github'
-    | '/lovable/email/transactional/preview'
   id:
     | '__root__'
     | '/'
@@ -348,7 +334,6 @@ export interface FileRouteTypes {
     | '/api/public/cron/registry-sync'
     | '/api/public/mcp/$slug'
     | '/api/public/webhooks/github'
-    | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -372,7 +357,6 @@ export interface RootRouteChildren {
   ApiPublicCronRegistrySyncRoute: typeof ApiPublicCronRegistrySyncRoute
   ApiPublicMcpSlugRoute: typeof ApiPublicMcpSlugRoute
   ApiPublicWebhooksGithubRoute: typeof ApiPublicWebhooksGithubRoute
-  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -559,13 +543,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksGithubRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -611,7 +588,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronRegistrySyncRoute: ApiPublicCronRegistrySyncRoute,
   ApiPublicMcpSlugRoute: ApiPublicMcpSlugRoute,
   ApiPublicWebhooksGithubRoute: ApiPublicWebhooksGithubRoute,
-  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

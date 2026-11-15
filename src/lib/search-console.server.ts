@@ -1,21 +1,20 @@
-// Server-side Google Search Console access via the Lovable connector gateway.
-// The property is always resolved from a live GET /webmasters/v3/sites call —
-// never hardcoded or cached across requests.
+// Server-side Google Search Console access via the direct Google API.
+// Requires GOOGLE_SEARCH_CONSOLE_API_KEY (OAuth bearer token for the
+// Google account that owns the Search Console property).
 
-const GATEWAY = "https://connector-gateway.lovable.dev/google_search_console";
+const GSC_API = "https://www.googleapis.com/webmasters/v3";
 const TARGET_URL = "https://emskills.org/";
 
-function gatewayHeaders() {
-  const lovableApiKey = process.env["LOVABLE_API_KEY"];
-  const connectionApiKey = process.env["GOOGLE_SEARCH_CONSOLE_API_KEY"];
-  if (!lovableApiKey || !connectionApiKey) {
+function apiHeaders() {
+  const apiKey = process.env["GOOGLE_SEARCH_CONSOLE_API_KEY"];
+  if (!apiKey) {
     throw new Error(
-      "Search Console is not connected to this project — link the Google Search Console connector first.",
+      "Search Console is not configured — set GOOGLE_SEARCH_CONSOLE_API_KEY in your deployment environment.",
     );
   }
   return {
-    Authorization: `Bearer ${lovableApiKey}`,
-    "X-Connection-Api-Key": connectionApiKey,
+    Authorization: `Bearer ${apiKey}`,
+    "Content-Type": "application/json",
   };
 }
 
@@ -39,7 +38,7 @@ function coversTarget(siteUrl: string, target: URL): boolean {
 }
 
 export async function resolveSiteUrl(selectedSiteUrl?: string): Promise<SiteResolution> {
-  const res = await fetch(`${GATEWAY}/webmasters/v3/sites`, { headers: gatewayHeaders() });
+  const res = await fetch(`${GSC_API}/sites`, { headers: apiHeaders() });
   if (!res.ok) {
     throw new Error(`Could not list Search Console properties [${res.status}]: ${await res.text()}`);
   }
@@ -85,16 +84,16 @@ async function queryAnalytics(
   body: Record<string, unknown>,
 ): Promise<AnalyticsRow[]> {
   const res = await fetch(
-    `${GATEWAY}/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/searchAnalytics/query`,
+    `${GSC_API}/sites/${encodeURIComponent(siteUrl)}/searchAnalytics/query`,
     {
       method: "POST",
-      headers: { ...gatewayHeaders(), "Content-Type": "application/json" },
+      headers: apiHeaders(),
       body: JSON.stringify(body),
     },
   );
   if (res.status === 403) {
     throw new Error(
-      "The connected Google account cannot access the selected Search Console property.",
+      "The configured Google account cannot access the selected Search Console property.",
     );
   }
   if (!res.ok) {
