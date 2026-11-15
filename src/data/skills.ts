@@ -42,6 +42,8 @@ export const categories = [
   { name: "Alignment & drift", count: 88 },
   { name: "Tilt series / tomography", count: 71 },
   { name: "Reconstruction", count: 129 },
+  { name: "Data integrity", count: 2 },
+  { name: "Simulation", count: 1 },
 ];
 
 export const skills: Skill[] = [
@@ -54,8 +56,8 @@ export const skills: Skill[] = [
       "Reference-free 2D classification of particle micrographs with a motion-correction pre-pass.",
     description:
       "Reference-free 2D classification of cryo-EM particle micrographs. Includes motion correction, contrast transfer estimation, and clustering with configurable binning and angular sampling. Exposes a typed MCP toolset for batch runs against a session directory.",
-    org: "volvox-lab",
-    repo: "volvox-lab/cryo2d",
+    org: "emskills-mcp",
+    repo: "emskills-mcp/em-skills",
     version: "v2.4.1",
     updated: "2026-06-02",
     stars: 1204,
@@ -74,8 +76,8 @@ export const skills: Skill[] = [
     summary: "Phase mapping from dispersive spectra with peak deconvolution and ZAF correction.",
     description:
       "Super-resolution phase mapping from energy dispersive spectra. Performs automatic peak deconvolution, background subtraction, and ZAF quantification, returning per-pixel elemental fractions plus a labelled phase map.",
-    org: "quanta-research",
-    repo: "quanta-research/edax-phase-map",
+    org: "emskills-mcp",
+    repo: "emskills-mcp/em-skills",
     version: "v1.9.0",
     updated: "2026-05-28",
     stars: 876,
@@ -94,8 +96,8 @@ export const skills: Skill[] = [
     summary: "Per-tilt CTF estimation and refinement with amorphous-carbon reference subtraction.",
     description:
       "Per-tilt contrast transfer function estimation and refinement for TEM diffraction patterns. Handles amorphous-carbon reference subtraction, astigmatism fitting, and defocus drift across a tilt series.",
-    org: "helix-imaging",
-    repo: "helix-imaging/ctf-fitter",
+    org: "emskills-mcp",
+    repo: "emskills-mcp/em-skills",
     version: "v3.1.2",
     updated: "2026-06-05",
     stars: 642,
@@ -114,8 +116,8 @@ export const skills: Skill[] = [
     summary: "Mill-volume segmentation and lift-out path planning for serial sectioning.",
     description:
       "Segments the mill volume from live FIB imagery and plans a lift-out path for serial-sectioning workflows, including lamella thickness targets and redeposition avoidance.",
-    org: "mesa-nano",
-    repo: "mesa-nano/fib-mill-seg",
+    org: "emskills-mcp",
+    repo: "emskills-mcp/em-skills",
     version: "v0.8.3",
     updated: "2026-04-19",
     stars: 411,
@@ -134,8 +136,8 @@ export const skills: Skill[] = [
     summary: "3D surface relief reconstruction from four-quadrant backscattered stacks.",
     description:
       "Reconstructs 3D surface relief from four-quadrant backscattered electron stacks, returning a height field with per-pixel confidence and roughness statistics.",
-    org: "surfacelab",
-    repo: "surfacelab/sem-topography",
+    org: "emskills-mcp",
+    repo: "emskills-mcp/em-skills",
     version: "v2.4.0",
     updated: "2026-03-11",
     stars: 588,
@@ -154,8 +156,8 @@ export const skills: Skill[] = [
     summary: "Core-loss edge identification and oxidation-state fingerprinting.",
     description:
       "Identifies core-loss edges in EELS spectra, fits fine structure, and fingerprints oxidation states against a reference library. Returns candidate assignments with confidence intervals.",
-    org: "zernike-dept",
-    repo: "zernike-dept/eels-edge-id",
+    org: "emskills-mcp",
+    repo: "emskills-mcp/em-skills",
     version: "v1.2.7",
     updated: "2026-05-14",
     stars: 337,
@@ -174,8 +176,8 @@ export const skills: Skill[] = [
     summary: "Closed-loop drift correction for long atomic-resolution acquisitions.",
     description:
       "Estimates specimen drift between scan frames and issues stage/scan-shift corrections, keeping atomic-resolution STEM acquisitions locked over multi-hour sessions.",
-    org: "atomscope",
-    repo: "atomscope/stem-drift-lock",
+    org: "emskills-mcp",
+    repo: "emskills-mcp/em-skills",
     version: "v0.6.1",
     updated: "2026-06-08",
     stars: 295,
@@ -194,8 +196,8 @@ export const skills: Skill[] = [
     summary: "Fiducial-free tilt-series alignment with confidence-weighted reconstruction.",
     description:
       "Aligns tilt series without fiducials using patch tracking, then reconstructs a 3D volume with per-voxel confidence maps for downstream segmentation.",
-    org: "helix-imaging",
-    repo: "helix-imaging/tomo-align",
+    org: "emskills-mcp",
+    repo: "emskills-mcp/em-skills",
     version: "v3.0.4",
     updated: "2026-02-22",
     stars: 704,
@@ -214,8 +216,8 @@ export const skills: Skill[] = [
     summary: "Ice-thickness estimation and automated grid-square quality triage.",
     description:
       "Scores grid squares and foil holes from an atlas montage, estimating ice thickness and contamination to produce a ranked acquisition queue for automated data collection.",
-    org: "volvox-lab",
-    repo: "volvox-lab/grid-atlas-qc",
+    org: "emskills-mcp",
+    repo: "emskills-mcp/em-skills",
     version: "v1.5.0",
     updated: "2026-05-30",
     stars: 512,
@@ -234,8 +236,8 @@ export const skills: Skill[] = [
     summary: "Magnification calibration against certified cross-grating standards.",
     description:
       "Calibrates magnification and pixel size against certified cross-grating standards, producing a drift-corrected calibration record suitable for audit trails.",
-    org: "metrolab",
-    repo: "metrolab/scalebar-calibrate",
+    org: "emskills-mcp",
+    repo: "emskills-mcp/em-skills",
     version: "v1.0.2",
     updated: "2026-01-30",
     stars: 188,
@@ -254,8 +256,8 @@ export const skills: Skill[] = [
     summary: "Template-free particle picking tuned for low signal-to-noise micrographs.",
     description:
       "Template-free particle picking with a denoising front-end for low signal-to-noise micrographs. Emits coordinate star files and per-pick confidence.",
-    org: "nano-science-inst",
-    repo: "nano-science-inst/particle-picker",
+    org: "emskills-mcp",
+    repo: "emskills-mcp/em-skills",
     version: "v2.0.0",
     updated: "2026-06-11",
     stars: 933,
@@ -274,8 +276,8 @@ export const skills: Skill[] = [
     summary: "Bayesian d-spacing measurement and lattice fitting from HRSTEM images.",
     description:
       "Measures d-spacings and fits atomic lattices from high-resolution STEM images using Bayesian inference, reporting posterior intervals for each lattice parameter.",
-    org: "atomscope",
-    repo: "atomscope/lattice-dspacing",
+    org: "emskills-mcp",
+    repo: "emskills-mcp/em-skills",
     version: "v1.4.3",
     updated: "2026-04-07",
     stars: 421,
