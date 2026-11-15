@@ -26,6 +26,8 @@ export type SkillRow = {
   verified_badge?: string | null;
   mcp_endpoint?: string | null;
   ai_quality?: unknown;
+  eval_tier1?: unknown;
+  eval_tier2?: unknown;
 
   submitted_by: string | null;
   published_at: string;

@@ -20,6 +20,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ContributeRouteImport } from './routes/contribute'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as InsightsRouteImport } from './routes/insights'
+import { Route as QualityRouteImport } from './routes/quality'
 import { Route as PartnershipsRouteImport } from './routes/partnerships'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -87,6 +88,11 @@ const DocsRoute = DocsRouteImport.update({
 const InsightsRoute = InsightsRouteImport.update({
   id: '/insights',
   path: '/insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QualityRoute = QualityRouteImport.update({
+  id: '/quality',
+  path: '/quality',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PartnershipsRoute = PartnershipsRouteImport.update({
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/contribute': typeof ContributeRoute
   '/docs': typeof DocsRoute
   '/insights': typeof InsightsRoute
+  '/quality': typeof QualityRoute
   '/partnerships': typeof PartnershipsRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -206,6 +213,7 @@ export interface FileRoutesByTo {
   '/contribute': typeof ContributeRoute
   '/docs': typeof DocsRoute
   '/insights': typeof InsightsRoute
+  '/quality': typeof QualityRoute
   '/partnerships': typeof PartnershipsRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -235,6 +243,7 @@ export interface FileRoutesById {
   '/contribute': typeof ContributeRoute
   '/docs': typeof DocsRoute
   '/insights': typeof InsightsRoute
+  '/quality': typeof QualityRoute
   '/partnerships': typeof PartnershipsRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -264,6 +273,7 @@ export interface FileRouteTypes {
     | '/contribute'
     | '/docs'
     | '/insights'
+    | '/quality'
     | '/partnerships'
     | '/privacy'
     | '/sitemap.xml'
@@ -291,6 +301,7 @@ export interface FileRouteTypes {
     | '/contribute'
     | '/docs'
     | '/insights'
+    | '/quality'
     | '/partnerships'
     | '/privacy'
     | '/sitemap.xml'
@@ -319,6 +330,7 @@ export interface FileRouteTypes {
     | '/contribute'
     | '/docs'
     | '/insights'
+    | '/quality'
     | '/partnerships'
     | '/privacy'
     | '/sitemap.xml'
@@ -348,6 +360,7 @@ export interface RootRouteChildren {
   ContributeRoute: typeof ContributeRoute
   DocsRoute: typeof DocsRoute
   InsightsRoute: typeof InsightsRoute
+  QualityRoute: typeof QualityRoute
   PartnershipsRoute: typeof PartnershipsRoute
   PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -436,6 +449,13 @@ declare module '@tanstack/react-router' {
       path: '/insights'
       fullPath: '/insights'
       preLoaderRoute: typeof InsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quality': {
+      id: '/quality'
+      path: '/quality'
+      fullPath: '/quality'
+      preLoaderRoute: typeof QualityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/partnerships': {
@@ -579,6 +599,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContributeRoute: ContributeRoute,
   DocsRoute: DocsRoute,
   InsightsRoute: InsightsRoute,
+  QualityRoute: QualityRoute,
   PartnershipsRoute: PartnershipsRoute,
   PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,

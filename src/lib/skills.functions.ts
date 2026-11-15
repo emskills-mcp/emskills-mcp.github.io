@@ -11,6 +11,25 @@ export const getPublishedSkills = createServerFn({ method: "GET" }).handler(
   },
 );
 
+export type EvalRecord = {
+  slug: string;
+  name: string;
+  technique: string;
+  org: string;
+  eval_tier1: { pass: boolean; issues: string[]; run_date: string; tool: string } | null;
+  eval_tier2: { similar_pairs: { slug: string; score: number }[]; threshold: number } | null;
+};
+
+export const getEvalReport = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("skills")
+    .select("slug, name, technique, org, eval_tier1, eval_tier2")
+    .order("name", { ascending: true });
+  if (error) throw new Error(`Failed to load eval report: ${error.message}`);
+  return (data ?? []) as unknown as EvalRecord[];
+});
+
 export const getSkillBySlug = createServerFn({ method: "GET" })
   .inputValidator((raw) => z.object({ slug: z.string() }).parse(raw))
   .handler(async ({ data }) => {
