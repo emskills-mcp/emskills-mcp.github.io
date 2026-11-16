@@ -2,8 +2,109 @@
 // A tool call is executed by a real model that is grounded in the skill's
 // published SKILL.md, so the run reflects the actual manifest, not a stub.
 
-const AI_URL = "https://api.anthropic.com/v1/messages";
-const MODEL = "claude-sonnet-5-5";
+type Completion = { ok: true; text: string; model: string } | { ok: false; why: string };
+type Provider = {
+  id: string;
+  run: (system: string, user: string) => Promise<Completion>;
+};
+
+function httpWhy(status: number): string {
+  if (status === 429) return "rate limit reached";
+  if (status === 529) return "overloaded";
+  if (status === 401 || status === 403) return "credential rejected";
+  return `HTTP ${status}`;
+}
+
+// OpenAI-compatible chat completions: GitHub Models, Cloudflare Workers AI and
+// Hugging Face Inference Providers all speak this shape.
+function openAiCompatible(url: string, token: string, model: string): Provider["run"] {
+  return async (system, user) => {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        max_tokens: 1024,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+      }),
+    });
+    if (!res.ok) return { ok: false, why: httpWhy(res.status) };
+    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    const text = json.choices?.[0]?.message?.content?.trim();
+    return text ? { ok: true, text, model } : { ok: false, why: "empty completion" };
+  };
+}
+
+/** Providers enabled by env vars, in preference order (MCP_PROVIDER_ORDER overrides). */
+function configuredProviders(): Provider[] {
+  const env = process.env;
+  const all: Record<string, Provider | null> = {
+    anthropic: env["ANTHROPIC_API_KEY"]
+      ? {
+          id: "anthropic",
+          run: async (system, user) => {
+            const model = "claude-sonnet-5-5";
+            const res = await fetch("https://api.anthropic.com/v1/messages", {
+              method: "POST",
+              headers: {
+                "x-api-key": env["ANTHROPIC_API_KEY"]!,
+                "anthropic-version": "2023-06-01",
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model,
+                max_tokens: 1024,
+                system,
+                messages: [{ role: "user", content: user }],
+              }),
+            });
+            if (!res.ok) return { ok: false, why: httpWhy(res.status) };
+            const json = (await res.json()) as { content?: { type: string; text?: string }[] };
+            const text = json.content?.find((b) => b.type === "text")?.text?.trim();
+            return text ? { ok: true, text, model } : { ok: false, why: "empty completion" };
+          },
+        }
+      : null,
+    github: env["GITHUB_MODELS_TOKEN"]
+      ? {
+          id: "github",
+          run: openAiCompatible(
+            "https://models.github.ai/inference/chat/completions",
+            env["GITHUB_MODELS_TOKEN"],
+            env["GITHUB_MODELS_MODEL"] || "openai/gpt-4.1-mini",
+          ),
+        }
+      : null,
+    cloudflare:
+      env["CLOUDFLARE_ACCOUNT_ID"] && env["CLOUDFLARE_API_TOKEN"]
+        ? {
+            id: "cloudflare",
+            run: openAiCompatible(
+              `https://api.cloudflare.com/client/v4/accounts/${env["CLOUDFLARE_ACCOUNT_ID"]}/ai/v1/chat/completions`,
+              env["CLOUDFLARE_API_TOKEN"],
+              env["CLOUDFLARE_MODEL"] || "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+            ),
+          }
+        : null,
+    huggingface: env["HF_TOKEN"]
+      ? {
+          id: "huggingface",
+          run: openAiCompatible(
+            "https://router.huggingface.co/v1/chat/completions",
+            env["HF_TOKEN"],
+            env["HF_MODEL"] || "meta-llama/Llama-3.3-70B-Instruct",
+          ),
+        }
+      : null,
+  };
+  const order = (env["MCP_PROVIDER_ORDER"] || "anthropic,github,cloudflare,huggingface")
+    .split(",")
+    .map((s) => s.trim());
+  return order.map((id) => all[id]).filter((p): p is Provider => Boolean(p));
+}
 
 export type HostedSkill = {
   slug: string;
@@ -70,8 +171,8 @@ export async function executeSkill(
   skill: HostedSkill,
   args: Record<string, unknown>,
 ): Promise<Execution> {
-  const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return fallback(skill, args, "no model credential configured");
+  const providers = configuredProviders();
+  if (providers.length === 0) return fallback(skill, args, "no model credential configured");
 
   const manifest = await loadManifest(skill);
 
@@ -105,31 +206,15 @@ export async function executeSkill(
     manifest ?? `(manifest unavailable — description: ${skill.description})`,
   ].join("\n");
 
-  try {
-    const res = await fetch(AI_URL, {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 1024,
-        system,
-        messages: [{ role: "user", content: user }],
-      }),
-    });
-    if (res.status === 429) return fallback(skill, args, "model rate limit reached, retry shortly");
-    if (res.status === 529) return fallback(skill, args, "model overloaded, retry shortly");
-    if (!res.ok) return fallback(skill, args, `API HTTP ${res.status}`);
-    const json = (await res.json()) as {
-      content?: { type: string; text?: string }[];
-    };
-    const text = json.content?.find((b) => b.type === "text")?.text?.trim();
-    if (!text) return fallback(skill, args, "model returned an empty completion");
-    return { text, model: MODEL, grounded: Boolean(manifest) };
-  } catch (e) {
-    return fallback(skill, args, e instanceof Error ? e.message : String(e));
+  const failures: string[] = [];
+  for (const p of providers) {
+    try {
+      const out = await p.run(system, user);
+      if (out.ok) return { text: out.text, model: `${p.id}:${out.model}`, grounded: Boolean(manifest) };
+      failures.push(`${p.id}: ${out.why}`);
+    } catch (e) {
+      failures.push(`${p.id}: ${e instanceof Error ? e.message : "request failed"}`);
+    }
   }
+  return fallback(skill, args, failures.join("; "));
 }
