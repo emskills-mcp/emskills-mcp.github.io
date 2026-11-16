@@ -11,7 +11,12 @@ const description =
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => ({
     redirect:
-      typeof search["redirect"] === "string" ? search["redirect"] : undefined,
+      typeof search["redirect"] === "string" &&
+      search["redirect"].startsWith("/") &&
+      !search["redirect"].startsWith("//") &&
+      search["redirect"].length < 512
+        ? search["redirect"]
+        : undefined,
   }),
   head: () => ({
     meta: [

@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/site-header";
 
@@ -22,14 +22,13 @@ function AuthGate() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  const redirected = useRef(false);
   useEffect(() => {
-    if (status === "out") {
-      navigate({
-        to: "/auth",
-        search: { redirect: location.href },
-      });
-    }
-  }, [status, navigate, location.href]);
+    if (status !== "out" || redirected.current) return;
+    redirected.current = true;
+    navigate({ to: "/auth", search: { redirect: location.href } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, navigate]);
 
   if (status !== "in") {
     return (
