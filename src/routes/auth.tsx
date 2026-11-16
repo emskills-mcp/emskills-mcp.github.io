@@ -77,11 +77,11 @@ function Auth() {
     }
   }
 
-  async function handleGoogle() {
+  async function handleOAuth(provider: "google" | "github") {
     setBusy(true);
     setError(null);
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
+      provider,
       options: { redirectTo: window.location.origin },
     });
     if (error) {
@@ -108,9 +108,16 @@ function Auth() {
           </p>
 
           <button
-            onClick={handleGoogle}
+            onClick={() => handleOAuth("github")}
             disabled={busy}
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-md border border-border bg-panel px-4 py-2.5 font-mono text-xs font-medium text-foreground transition-transform duration-200 hover:-translate-y-px disabled:opacity-60"
+          >
+            Continue with GitHub
+          </button>
+          <button
+            onClick={() => handleOAuth("google")}
+            disabled={busy}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-md border border-border bg-panel px-4 py-2.5 font-mono text-xs font-medium text-foreground transition-transform duration-200 hover:-translate-y-px disabled:opacity-60"
           >
             Continue with Google
           </button>
